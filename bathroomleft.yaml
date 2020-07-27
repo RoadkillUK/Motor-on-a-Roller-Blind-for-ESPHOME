@@ -1,0 +1,250 @@
+# Press button for > 1 second to enter setup mode
+# Press button again to start the blind closing
+# Press button again when closed and blind starts to open (actually resets the stepper position to 0)
+# Press button again when blind is fully open
+# Job Done
+
+# Button is also used to open/close the blind (must be fully open/closed first)
+
+# NOTE:  If you find that your shades are going the wrong way, you can change the pin
+#        settings below or reverse the + and – wires for each of the A and B motor
+#        pairs on your driver and the motor will spin in the opposite direction.
+
+substitutions:
+  devicename: bathroomleft
+  upper_devicename: Bathroom Left Blind
+  mystepper: my_stepper
+  pina: D5
+  pinb: D1
+  pinc: D2
+  pind: D3
+# Wrong direction? Comment the previous 4 lines and uncomment the following 4 
+#  pina: D1
+#  pinb: D5
+#  pinc: D3
+#  pind: D2
+
+esphome:
+  name: $devicename
+  platform: ESP8266
+  board: d1_mini
+  esp8266_restore_from_flash: True
+  on_boot:
+    - priority: -200.0
+      then:
+      - stepper.report_position: # Set stepper to global variable
+          id: $mystepper
+          position: !lambda return id(${mystepper}_global);
+      - stepper.set_target: # Set stepper to global variable
+          id: $mystepper
+          target: !lambda return id(${mystepper}_global);
+
+wifi:
+  networks: 
+    - ssid: !secret wifi
+      password: !secret wifi_password
+    - ssid: !secret wifi2
+      password: !secret wifi_password2
+
+  ap:
+    ssid: $upper_devicename
+    password: !secret wifi_password
+
+web_server:
+  port: 80
+
+logger:
+
+api:
+  password: !secret api_password
+
+ota:
+  password: !secret ota_password
+
+captive_portal:
+
+stepper:
+  - platform: uln2003
+    id: $mystepper
+    pin_a: $pina
+    pin_b: $pinb
+    pin_c: $pinc
+    pin_d: $pind
+    max_speed: 300 steps/s # Speed of the motor
+    sleep_when_done: True
+    acceleration: inf
+    deceleration: inf
+
+globals:
+  - id: ${mystepper}_global # Integer for storing the stepper position in case of reboot
+    type: int
+    restore_value: True
+    initial_value: '0'
+
+  - id: openclosed # Boolean to store OPEN/CLOSED state
+    type: bool
+    restore_value: True
+    initial_value: '0'
+
+  - id: endstop # Variable for storing OPEN (how far to move stepper)
+    type: int
+    restore_value: True
+    initial_value: '1000'
+
+  - id: settingmode # Integer for Setup Mode
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  - id: settingup # Boolean for Setup Active
+    type: bool
+    restore_value: no
+    initial_value: '0'
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D7
+      mode: INPUT_PULLUP
+      inverted: True
+    name: Button
+    internal: True
+    on_click:
+    - min_length: 50ms
+      max_length: 500ms
+      then: # Short press to OPEN/CLOSE blinds and also for setting up
+        - script.execute: moveit
+    - min_length: 1000ms
+      max_length: 3000ms
+      then: # Long press to Enter Setting Mode
+        - script.execute: setting
+
+cover:
+  - platform: template
+    name: $upper_devicename
+    lambda: |-
+      if (id(openclosed)) {
+        return COVER_OPEN;
+      } else {
+        return COVER_CLOSED;
+      }
+    open_action:
+      - script.execute: openscript
+    close_action:
+      - script.execute: closescript
+    device_class: blind
+
+script:
+  - id: moveit
+    then:
+      - if: # If settings variable is on
+          condition:
+            - lambda: 'return id(settingup);'
+          then: # Enter Setting Mode
+            - script.execute: setupbutton
+          else:
+            - if: # If blind is closed
+                condition:
+                  - lambda: 'return id(openclosed) == 0;'
+                then: # Open blind
+                  - script.execute: openscript
+                else: # Close blind
+                  - script.execute: closescript
+
+  - id: openscript
+    then:
+      - logger.log: "Opening"
+      - stepper.set_target: # Send stepper to endstop
+          id: $mystepper
+          target: !lambda return id(endstop);
+      - wait_until: # Wait until endstop reached
+          lambda: 'return (id($mystepper).current_position == id(endstop));'
+      - globals.set: # Set global to current position
+          id: ${mystepper}_global
+          value: !lambda return id($mystepper).current_position; 
+      - globals.set: # Set toggle to OPEN (No need for 'optimistic mode')
+          id: openclosed
+          value: '1'
+
+  - id: closescript
+    then:
+      - logger.log: "Closing"
+      - stepper.set_target: # Send stepper to 0
+          id: $mystepper
+          target: '0'
+      - wait_until: # Wait until 0 reached
+          lambda: 'return (id($mystepper).current_position == 0);'
+      - globals.set: # Set global to current position
+          id: ${mystepper}_global
+          value: !lambda return id($mystepper).current_position; 
+      - globals.set: # Set toggle to CLOSED (No need for 'optimistic mode')
+          id: openclosed
+          value: '0'
+
+  - id: setting
+    then:
+      - logger.log: "Entered Settings Mode"
+      - globals.set:
+          id: settingup
+          value:  '1'
+      - globals.set:
+          id: settingmode
+          value:  '1'
+
+  - id: setupbutton
+    then:
+      - if:
+          condition:
+            - lambda: 'return (id(settingmode) == 3);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 3"
+            - stepper.set_target: # Set Stepper position
+                id: $mystepper
+                target: !lambda return id($mystepper).current_position;
+            - globals.set: # Set Endstop Variable
+                id: endstop
+                value: !lambda return id($mystepper).current_position;
+            - globals.set: # Set Global stepper position
+                id: ${mystepper}_global
+                value: !lambda return id($mystepper).current_position;
+            - globals.set: # Reset Setting Mode
+                id: settingmode
+                value:  '0'
+            - globals.set: # Reset Setting Mode
+                id: settingup
+                value:  '0'
+            - globals.set: # Set toggle to Open
+                id: openclosed
+                value: '1'
+            - logger.log: "Exiting Setting Mode"
+      - if:
+          condition:
+            - lambda: 'return (id(settingmode) == 2);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 2"
+            - stepper.report_position: # Reset Stepper position to 0
+                id: $mystepper
+                position: '0'
+            - stepper.set_target: # Reset Stepper position to 0
+                id: $mystepper
+                target: '0'
+            - globals.set: # Move stepper to 0 (doesn't move it's already there!)
+                id: ${mystepper}_global
+                value: '0'
+            - stepper.set_target: # Reset Stepper position to 72000
+                id: $mystepper
+                target: '72000'
+            - globals.set: # Advance setup to next mode
+                id: settingmode
+                value:  '3'
+      - if:
+          condition:
+            - lambda: 'return (id(settingmode) == 1);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 1"
+            - stepper.report_position: # Set Stepper position to 72000, makes it move to 0 (Closed)
+                id: $mystepper
+                position: '72000'
+            - globals.set: # Advance setup to next mode
+                id: settingmode
+                value:  '2'
