@@ -1,0 +1,25 @@
+# Motor-on-a-Roller-Blind-for-ESPHOME
+ESPHome controlleded blinds.
+
+# This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
+# Use your mobile or tablet and connect to http://<devicename>.local to set up the blind
+#   Turn on the Setup Switch to enter Setup Mode and use the Setup Button as shown below to setup blinds.
+# 1) Turn on the Setup Switch to enter setup mode
+# 2) Press Setup button to start the blind closing
+# 3) Press Setup button again when closed and blind starts to open (actually resets the stepper position to 0)
+# 4) Press Setup button again when blind is fully open
+# 5) Job Done
+
+# This sketch also includes a momentary button on D7 which can be used in the following way
+# 1) Press button for > 1 second to enter setup mode
+# 2) Press button again to start the blind closing
+# 3) Press button again when closed and blind starts to open (actually resets the stepper position to 0)
+# 4) Press button again when blind is fully open
+# 5) Job Done
+
+# Button is also used to open/close the blind (must be fully open/closed first)
+
+# NOTE:  If you find that your shades are going the wrong way, you can change the pin
+#        settings below or reverse the + and – wires for each of the A and B motor
+#        pairs on your driver and the motor will spin in the opposite direction.
+
