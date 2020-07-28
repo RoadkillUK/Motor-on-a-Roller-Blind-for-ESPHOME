@@ -3,11 +3,13 @@ ESPHome controlled blinds.
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 
-I made this sketch because I would prefer to have my blinds running ESPHome.
+I made this sketch because I would prefer to have my blinds running ESPHome rather than MQTT.
 
-It will run on it's own, without HA as long as you have a Button connected to D7 and GND, but why bother.
+It will run on it's own, without HA as long as you have a Button connected to D7 and GND, (this button is also used for manual operation).
 
 This sketch will replace the original 'Motor on a roller blind' which I have been using for some time myself and it's been almost perfect.
+
+To upload via WIFI, go to https://steve.fi/hardware/ota-upload/ and follow the instructions, took less than one minute to upload and configure!
 
 You should only have to set up the blind once, it stores the open/closed status and position even if you flash the device, it will report open/closed so HA will know where your blind is, even after restarting HA.
 
