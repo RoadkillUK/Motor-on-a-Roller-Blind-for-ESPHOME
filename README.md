@@ -3,6 +3,9 @@ ESPHome controlled blinds.
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 
+Thanks to PeterG https://www.thingiverse.com/pgote/designs for his 3D printed parts and original code for the motor on a
+roller blind. https://www.thingiverse.com/thing:2392856
+
 I made this sketch because I would prefer to have my blinds running ESPHome rather than MQTT.
 
 It will run on it's own, without HA as long as you have a Button connected to D7 and GND, (this button is also used for manual operation).
