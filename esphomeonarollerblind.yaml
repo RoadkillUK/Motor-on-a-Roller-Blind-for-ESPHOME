@@ -23,7 +23,7 @@
 # The following pins are for the original 'Motor on a Roller Blind'
 
 substitutions:
-  devicename: Roller_blind
+  devicename: roller_blind
   upper_devicename: Roller Blind
   mystepper: my_stepper
   pina: D1
