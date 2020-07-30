@@ -23,8 +23,8 @@
 # The following pins are for the original 'Motor on a Roller Blind'
 
 substitutions:
-  devicename: kitchen_blind
-  upper_devicename: Kitchen Blind
+  devicename: Roller_blind
+  upper_devicename: Roller Blind
   mystepper: my_stepper
   pina: D1
   pinb: D3
