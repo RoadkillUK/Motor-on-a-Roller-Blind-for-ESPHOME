@@ -1,5 +1,5 @@
 # Motor-on-a-Roller-Blind-for-ESPHOME
-ESPHome controlled blinds.
+##ESPHome controlled blinds.
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 

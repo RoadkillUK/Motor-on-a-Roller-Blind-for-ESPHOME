@@ -96,7 +96,7 @@ globals:
     restore_value: True
     initial_value: '0'
 
-  - id: endstop # Variable for storing OPEN (how far to move stepper)
+  - id: endstop # Variable for storing ENDSTOP (how far to move stepper)
     type: int
     restore_value: True
     initial_value: '1000'
@@ -163,6 +163,7 @@ switch:
 cover:
   - platform: template
     name: $upper_devicename
+    id: blinded
     lambda: |-
       if (id(openclosed)) {
         return COVER_OPEN;
@@ -173,6 +174,18 @@ cover:
       - script.execute: openscript
     close_action:
       - script.execute: closescript
+    position_action:
+#      - script.execute: positional
+      then:
+        - stepper.set_target:
+            id: $mystepper
+            target: !lambda return id(endstop) * pos;
+        - wait_until: # Wait until 0 reached
+            lambda: 'return id($mystepper).current_position == (id(endstop) * pos);'
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position; 
+    has_position: true
     device_class: blind
 
 script:
@@ -206,6 +219,9 @@ script:
       - globals.set: # Set toggle to OPEN (No need for 'optimistic mode')
           id: openclosed
           value: '1'
+      - logger.log:
+          format: "The position is being reported as %d, endstop is %d"
+          args: [ 'id($mystepper).current_position','id(endstop)' ]
 
   - id: closescript
     then:
