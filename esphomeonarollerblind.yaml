@@ -184,7 +184,17 @@ cover:
             lambda: 'return id($mystepper).current_position == (id(endstop) * pos);'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
-            value: !lambda return id($mystepper).current_position; 
+            value: !lambda return id($mystepper).current_position;
+    stop_action:
+      then:
+        - stepper.set_target:
+            id: $mystepper
+            target: !lambda return id($mystepper).current_position;
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position;
+        - script.stop: openscript
+        - script.stop: closescript
     has_position: true
     device_class: blind
 
