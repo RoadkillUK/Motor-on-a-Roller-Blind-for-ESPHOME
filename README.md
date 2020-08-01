@@ -3,8 +3,20 @@
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 
-Thanks to PeterG https://www.thingiverse.com/pgote/designs for his 3D printed parts and original code for the motor on a
-roller blind. https://www.thingiverse.com/thing:2392856
+Thanks to PeterG https://www.thingiverse.com/pgote/designs for his 3D printed parts and [original code](https://www.thingiverse.com/thing:2392856) for the motor on a roller blind. 
+
+In order to control the position of the blinds from HA, I use [Lovelace Slider Entity Row](https://github.com/thomasloven/lovelace-slider-entity-row) from Thomas Lovén, use the following in lovelace (must be step 10)
+
+`  - type: entities
+    name: Roller Blind
+    min: 0
+    max: 100
+    step: 10
+    entities:
+      - cover.roller_blind
+      - type: custom:slider-entity-row
+        entity: cover.roller_blind
+`
 
 I made this sketch because I would prefer to have my blinds running ESPHome rather than MQTT.
 
@@ -19,19 +31,19 @@ You should only have to set up the blind once, it stores the open/closed status 
  This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
  Use your mobile or tablet and connect to http://<devicename>.local to set up the blind
 
- 1) Turn on the Setup Switch to enter setup mode
- 2) Press Setup button to start the blind closing
- 3) Press Setup button again when closed and blind starts to open (actually resets the stepper position to 0)
- 4) Press Setup button again when blind is fully open
- 5) Job Done
+ - Turn on the Setup Switch to enter setup mode
+ - Press Setup button to start the blind closing
+ - Press Setup button again when closed and blind starts to open (actually resets the stepper position to 0)
+ - Press Setup button again when blind is fully open
+ - Job Done
 
  This sketch also includes a momentary button on D7 which can be used in the following way
 
- 1) Press button for > 1 second to enter setup mode
- 2) Press button again to start the blind closing
- 3) Press button again when closed and blind starts to open (actually resets the stepper position to 0)
- 4) Press button again when blind is fully open
- 5) Job Done
+ - Press button for > 1 second to enter setup mode
+ - Press button again to start the blind closing
+ - Press button again when closed and blind starts to open (actually resets the stepper position to 0)
+ - Press button again when blind is fully open
+ - Job Done
 
  The button is also used to open/close the blind (must be fully open/closed first)
 

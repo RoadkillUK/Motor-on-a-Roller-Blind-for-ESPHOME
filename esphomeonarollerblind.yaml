@@ -253,7 +253,6 @@ cover:
             current_operation: IDLE
     position_action:
       then:
-        - logger.log: "Position"
         - stepper.set_target:
             id: $mystepper
             target: !lambda return int(id(endstop) * pos);
