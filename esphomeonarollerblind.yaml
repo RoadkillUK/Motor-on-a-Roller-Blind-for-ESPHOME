@@ -26,6 +26,7 @@ substitutions:
   devicename: roller_blind
   upper_devicename: Roller Blind
   mystepper: my_stepper
+  speed: 250 steps/s
   pina: D1
   pinb: D3
   pinc: D2
@@ -56,7 +57,7 @@ esphome:
       - if: # If blind is Closed
           condition:
             - lambda: 'return id(${mystepper}_global) == id(endstop);'
-          then: # Enter Setting Mode
+          then: # Publish state etc.
             - cover.template.publish:
                 id: blinded
                 state: CLOSED
@@ -64,15 +65,15 @@ esphome:
       - if: # If blind is Open
           condition:
             - lambda: 'return id(${mystepper}_global) == 0;'
-          then: # Enter Setting Mode
+          then: # Publish state etc.
             - cover.template.publish:
                 id: blinded
                 state: OPEN
                 current_operation: IDLE
-      - if: # If blind is Open
+      - if: # If blind is Neither
           condition:
-            - lambda: 'return id(${mystepper}_global) == 0;'
-          then: # Enter Setting Mode
+            - lambda: 'return (id(${mystepper}_global) != 0) && (id(${mystepper}_global) != id(endstop));'
+          then: #  # Publish state etc.
             - cover.template.publish:
                 id: blinded
                 position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
@@ -106,7 +107,7 @@ stepper:
     pin_b: $pinb
     pin_c: $pinc
     pin_d: $pind
-    max_speed: 600 steps/s # Speed of the motor
+    max_speed: ${speed} # Speed of the motor
     sleep_when_done: True
     acceleration: inf
     deceleration: inf
@@ -269,6 +270,7 @@ cover:
             value: !lambda return id($mystepper).current_position; 
         - cover.template.publish:
             id: blinded
+            position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
             current_operation: IDLE
     stop_action:
       then:
@@ -308,6 +310,10 @@ script:
             - globals.set: # Set toggle to Open
                 id: openclosed
                 value: '1'
+            - cover.template.publish:
+                id: blinded
+                state: OPEN 
+                current_operation: IDLE
             - logger.log: "Exiting Setting Mode"
       - if:
           condition:

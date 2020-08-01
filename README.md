@@ -8,6 +8,7 @@ Thanks to [PeterG](https://www.thingiverse.com/pgote/designs) for his 3D printed
 In order to control the position of the blinds from HA, I use [Lovelace Slider Entity Row](https://github.com/thomasloven/lovelace-slider-entity-row) from [Thomas Lovén](https://github.com/thomasloven), use the following in lovelace (must be step: 10)
 
 ```  - type: entities
+  - type: entities
     name: Roller Blind
     min: 0
     max: 100
