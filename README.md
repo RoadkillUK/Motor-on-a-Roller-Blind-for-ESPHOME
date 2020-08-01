@@ -1,13 +1,13 @@
 # Motor-on-a-Roller-Blind-for-ESPHOME
-##ESPHome controlled blinds.
+## ESPHome controlled blinds.
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 
-Thanks to PeterG https://www.thingiverse.com/pgote/designs for his 3D printed parts and [original code](https://www.thingiverse.com/thing:2392856) for the motor on a roller blind. 
+Thanks to [PeterG](https://www.thingiverse.com/pgote/designs) for his 3D printed parts and [original code](https://www.thingiverse.com/thing:2392856) for the motor on a roller blind. 
 
 In order to control the position of the blinds from HA, I use [Lovelace Slider Entity Row](https://github.com/thomasloven/lovelace-slider-entity-row) from Thomas Lovén, use the following in lovelace (must be step 10)
 
-`  - type: entities
+```  - type: entities
     name: Roller Blind
     min: 0
     max: 100
@@ -16,7 +16,7 @@ In order to control the position of the blinds from HA, I use [Lovelace Slider E
       - cover.roller_blind
       - type: custom:slider-entity-row
         entity: cover.roller_blind
-`
+```
 
 I made this sketch because I would prefer to have my blinds running ESPHome rather than MQTT.
 
