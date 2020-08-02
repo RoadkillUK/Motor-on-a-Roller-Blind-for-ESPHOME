@@ -1,5 +1,6 @@
 # Motor-on-a-Roller-Blind-for-ESPHOME
 ## ESPHome controlled blinds.
+### This setup has changed to 2 files, copy them both to /config/esphome/, edit and compile the testblind.yaml
 
 This setup uses a Robotdyne ESP8266 Wifi D1 Mini and a 28BYJ-48 stepper motor + ULN2003 driver board.
 
@@ -46,7 +47,7 @@ You should only have to set up the blind once, it stores the open/closed status 
  - Press button again when blind is fully open
  - Job Done
 
- The button is also used to open/close the blind (must be fully open/closed first)
+ The button is also used to open/close the blind
 
  NOTE:  If you find that your shades are going the wrong way, you can change the pin
         settings below or reverse the + and – wires for each of the A and B motor

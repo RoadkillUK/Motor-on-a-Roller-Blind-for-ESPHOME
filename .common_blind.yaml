@@ -1,6 +1,7 @@
 # This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
 # Use your mobile or tablet and connect to http://<devicename>.local to set up the blind
-#   Turn on the Setup Switch to enter Setup Mode and use the Setup Button as shown below to setup blinds.
+# Turn on the Setup Switch to enter Setup Mode and use the Setup Button as shown below to setup blinds.
+
 # 1) Turn on the Setup Switch to enter setup mode
 # 2) Press Setup button to start the blind closing
 # 3) Press Setup button again when closed and blind starts to open (actually resets the stepper position to 0)
@@ -16,26 +17,9 @@
 
 # Button is also used to open/close the blind (must be fully open/closed first)
 
-# NOTE:  If you find that your shades are going the wrong way, you can change the pin
-#        settings below or reverse the + and – wires for each of the A and B motor
-#        pairs on your driver and the motor will spin in the opposite direction.
-
-# The following pins are for the original 'Motor on a Roller Blind'
-
-substitutions:
-  devicename: roller_blind
-  upper_devicename: Roller Blind
-  mystepper: my_stepper
-  speed: 250 steps/s
-  pina: D1
-  pinb: D3
-  pinc: D2
-  pind: D4
-# Wrong direction? Comment the previous 4 lines and uncomment the following 4 
-#  pina: D3
-#  pinb: D1
-#  pinc: D4
-#  pind: D2
+# Copy these files to the config/esphome/ directory
+# Don't compile this sketch, edit testblind.yaml (if required) and compile that sketch
+# You won't be able to see this sketch in HA (because of the . at the front of the filename)
 
 esphome:
   name: $devicename
@@ -51,12 +35,9 @@ esphome:
       - stepper.set_target: # Set stepper to global variable
           id: $mystepper
           target: !lambda return id(${mystepper}_global);
-      - cover.template.publish:
-          id: blinded
-          current_operation: IDLE
       - if: # If blind is Closed
           condition:
-            - lambda: 'return id(${mystepper}_global) == id(endstop);'
+            - lambda: 'return id(${mystepper}_global) == 0;'
           then: # Publish state etc.
             - cover.template.publish:
                 id: blinded
@@ -64,7 +45,7 @@ esphome:
                 current_operation: IDLE
       - if: # If blind is Open
           condition:
-            - lambda: 'return id(${mystepper}_global) == 0;'
+            - lambda: 'return id(${mystepper}_global) == id(endstop);'
           then: # Publish state etc.
             - cover.template.publish:
                 id: blinded
@@ -183,10 +164,11 @@ switch:
             id: settingmode
             value:  '1'
     turn_off_action:
-      - logger.log: "Exiting Settings Mode"
-      - globals.set:
-          id: settingmode
-          value:  '0'
+      then:
+        - logger.log: "Exiting Settings Mode"
+        - globals.set:
+            id: settingmode
+            value:  '0'
   - platform: template
     name: ${upper_devicename} Setup Button # Switch to replicate the Physical Button
     id: hasetup
