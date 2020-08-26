@@ -30,12 +30,14 @@ To upload via WIFI, go to https://steve.fi/hardware/ota-upload/ and follow the i
 
 You should only have to set up the blind once, it stores the open/closed status and position even if you flash the device, it will report open/closed so HA will know where your blind is, even after restarting HA.
 
+## How do I set up the blind?
+
  This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
- Use your mobile or tablet and connect to http://<devicename>.local to set up the blind
+ Use your mobile or tablet and connect to http://\<devicename>.local to set up the blind
 
  - Turn on the Setup Switch to enter setup mode
  - Press Setup button to start the blind closing
- - Press Setup button again when closed and blind starts to open (actually resets the stepper position to 0)
+ - Press Setup button again when closed and blind starts to open
  - Press Setup button again when blind is fully open
  - Job Done
 
@@ -43,13 +45,14 @@ You should only have to set up the blind once, it stores the open/closed status 
 
  - Press button for > 1 second to enter setup mode
  - Press button again to start the blind closing
- - Press button again when closed and blind starts to open (actually resets the stepper position to 0)
+ - Press button again when closed and blind starts to open
  - Press button again when blind is fully open
  - Job Done
 
  The button is also used to open/close the blind
 
  NOTE:  If you find that your shades are going the wrong way, you can change the pin
-        settings below or reverse the + and – wires for each of the A and B motor
+        settings in the 'testblind.yaml' or reverse the + and – wires for each of the A and B motor
         pairs on your driver and the motor will spin in the opposite direction.
 
+### There are 2 versions available, one which reports position while moving (has a small pause every second), and a second version that has no delay but does not report position while moving.

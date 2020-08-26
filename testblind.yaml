@@ -7,7 +7,8 @@ substitutions:
   pinb: D3 # Swap these /
   pinc: D2 # Swap these \_ coil b
   pind: D4 # Swap these /
-<<: !include .common_blind.yaml
+<<: !include .common_blind.yaml # comment this line and uncomment the following line to enable the no_delay version.
+# <<: !include .common_blind_no_delay.yaml
 
 # NOTE:  If you find that your shades are going the wrong way, you can change the pin
 #        settings or reverse the + and – wires for each of the A and B motor
