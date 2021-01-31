@@ -1,3 +1,5 @@
+#https://github.com/RoadkillUK/Motor-on-a-Roller-Blind-for-ESPHOME - Written by RoadkillUK
+
 # This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
 # Use your mobile or tablet and connect to http://<devicename>.local to set up the blind
 # Turn on the Setup Switch to enter Setup Mode and use the Setup Button as shown below to setup blinds.
