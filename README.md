@@ -1,3 +1,5 @@
+###Please download from the Releases Page [Releases](https://github.com/RoadkillUK/Motor-on-a-Roller-Blind-for-ESPHOME/releases/tag/v1.0)
+
 # Motor-on-a-Roller-Blind-for-ESPHOME
 ## ESPHome controlled blinds.
 ### This setup has changed to 2 files, copy them both to /config/esphome/, edit and compile the testblind.yaml
