@@ -235,6 +235,8 @@ cover:
         - stepper.set_target:
             id: $mystepper
             target: !lambda return int(id(endstop) * pos);
+        - wait_until: # Wait until endstop reached
+            lambda: 'return id($mystepper).current_position == (int(id(endstop) * pos));'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
             value: !lambda return id($mystepper).current_position; 
