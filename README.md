@@ -1,4 +1,4 @@
-### Please download from the Releases Page [Releases](https://github.com/RoadkillUK/Motor-on-a-Roller-Blind-for-ESPHOME/releases/tag/v1.0)
+### Please download from the Releases Page [Releases](https://github.com/RoadkillUK/Motor-on-a-Roller-Blind-for-ESPHOME/releases)
 
 # Motor-on-a-Roller-Blind-for-ESPHOME
 ## ESPHome controlled blinds.
