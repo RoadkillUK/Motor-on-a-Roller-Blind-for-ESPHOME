@@ -303,7 +303,7 @@ script:
                 value: '0'
             - stepper.set_target: # Reset Stepper position to 72000
                 id: $mystepper
-                target: '72000'
+                target: '140000'
             - globals.set: # Advance setup to next mode
                 id: settingmode
                 value:  '3'
