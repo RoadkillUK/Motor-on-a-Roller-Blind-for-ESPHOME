@@ -57,4 +57,4 @@ You should only have to set up the blind once, it stores the open/closed status 
         settings in the 'testblind.yaml' or reverse the + and – wires for each of the A and B motor
         pairs on your driver and the motor will spin in the opposite direction.
 
-### There are 2 versions available, one which reports position while moving (has a small pause every second), and a second version that has no delay but does not report position while moving.
+### There is now only 1 version available, I have added a substitution in the testblind.yaml file to enable reporting position while moving (has a small pause every second), or no delay but does not report position while moving.

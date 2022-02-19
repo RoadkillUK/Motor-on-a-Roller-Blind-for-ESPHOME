@@ -5,12 +5,14 @@ substitutions:
   upper_devicename: Roller Blind
   mystepper: my_stepper # Name of the stepper motor (leave as is)
   speed: 600 steps/s # Set the speed of the motor
+  reportin: "0" # Set if you want the blind to report position while moving (causes delay)
+
   pina: D1 # Swap these \_ coil a
   pinb: D3 # Swap these /
   pinc: D2 # Swap these \_ coil b
   pind: D4 # Swap these /
-<<: !include .common_blind.yaml # comment this line and uncomment the following line to enable the no_delay version.
-# <<: !include .common_blind_no_delay.yaml
+
+<<: !include .common_blind.yaml # include the main blind file
 
 # NOTE:  If you find that your shades are going the wrong way, you can change the pin
 #        settings or reverse the + and – wires for each of the A and B motor

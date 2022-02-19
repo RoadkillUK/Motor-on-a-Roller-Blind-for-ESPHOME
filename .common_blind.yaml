@@ -116,6 +116,11 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  - id: reportin # Boolean for reporting the position of blind when moving (See testblind.yaml)
+    type: bool
+    restore_value: no
+    initial_value: '${reportin}'
+
 binary_sensor:
   - platform: gpio
     pin:
@@ -192,15 +197,22 @@ cover:
         - stepper.set_target: # Send stepper to endstop
             id: $mystepper
             target: !lambda return id(endstop);
-        - while:
-            condition:
-              lambda: 'return id($mystepper).current_position != id(endstop);'
+        - if:
+            condition: 
+              lambda: 'return id(reportin) == 1;' # If Reporting is Selected
             then:
-              - cover.template.publish:
-                  id: blinded
-                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
-                  current_operation: OPENING
-              - delay: 1000 ms
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != id(endstop);'
+                  then:
+                    - cover.template.publish:
+                        id: blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
+                        current_operation: OPENING
+                    - delay: 1000 ms
+            else:
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return (id($mystepper).current_position == id(endstop));'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
             value: !lambda return id($mystepper).current_position; 
@@ -217,15 +229,22 @@ cover:
         - stepper.set_target: # Send stepper to 0
             id: $mystepper
             target: '0'
-        - while:
-            condition:
-              lambda: 'return id($mystepper).current_position != 0;'
+        - if:
+            condition: 
+              lambda: 'return id(reportin) == 1;'
             then:
-              - cover.template.publish:
-                  id: blinded
-                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
-                  current_operation: CLOSING
-              - delay: 1000 ms
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != 0;'
+                  then:
+                    - cover.template.publish:
+                        id: blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
+                        current_operation: CLOSING
+                    - delay: 1000 ms
+            else:
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return (id($mystepper).current_position == id(endstop));'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
             value: !lambda return id($mystepper).current_position; 
@@ -241,14 +260,21 @@ cover:
         - stepper.set_target:
             id: $mystepper
             target: !lambda return int(id(endstop) * pos);
-        - while:
-            condition:
-              lambda: 'return id($mystepper).current_position != int(id(endstop) * pos);'
+        - if:
+            condition: 
+              lambda: 'return id(reportin) == 1;'
             then:
-              - cover.template.publish:
-                  id: blinded
-                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
-              - delay: 1000 ms
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != int(id(endstop) * pos);'
+                  then:
+                    - cover.template.publish:
+                        id: blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
+                    - delay: 1000 ms
+            else:
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return id($mystepper).current_position == (int(id(endstop) * pos));'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
             value: !lambda return id($mystepper).current_position; 
