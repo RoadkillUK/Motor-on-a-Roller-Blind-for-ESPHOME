@@ -84,12 +84,12 @@ ota:
 captive_portal:
 
 stepper:
-  - platform: uln2003
+  - platform: A4988
     id: $mystepper
-    pin_a: $pina
-    pin_b: $pinb
-    pin_c: $pinc
-    pin_d: $pind
+    step-pin: $pina
+    dir-pin: $pinb
+    sleep-pin: $pinc
+#    pin_d: $pind
     max_speed: ${speed} # Speed of the motor
     sleep_when_done: True
     acceleration: inf
