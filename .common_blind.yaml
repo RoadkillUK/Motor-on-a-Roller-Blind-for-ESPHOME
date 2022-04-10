@@ -244,7 +244,7 @@ cover:
                     - delay: 1000 ms
             else:
               - wait_until: # Wait until endstop reached
-                  lambda: 'return (id($mystepper).current_position == id(endstop));'
+                  lambda: 'return id($mystepper).current_position == 0;'
         - globals.set: # Set global to current position
             id: ${mystepper}_global
             value: !lambda return id($mystepper).current_position; 
