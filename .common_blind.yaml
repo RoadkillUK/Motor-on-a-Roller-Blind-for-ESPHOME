@@ -121,6 +121,30 @@ globals:
     restore_value: no
     initial_value: '${reportin}'
 
+text_sensor:
+  - platform: version
+    name: ${upper_devicename} ESPHome Version
+    hide_timestamp: true
+  - platform: wifi_info
+    ip_address:
+      name: ${upper_devicename} IP
+      icon: mdi:ip-network
+    ssid:
+      name: ${upper_devicename} SSID
+      icon: mdi:wifi
+    mac_address:
+      name: "${upper_devicename} MAC"
+      icon: mdi:identifier
+  - platform: template
+    name: ${upper_devicename} Friendly Name
+    icon: 'mdi:information-outline'
+    lambda: |-
+      return {"$upper_devicename"};
+  - platform: template
+    name: ${upper_devicename} Uptime
+    id: uptime_human
+    icon: mdi:clock-start
+
 binary_sensor:
   - platform: gpio
     pin:
@@ -154,6 +178,35 @@ binary_sensor:
             id: settingmode
             value:  '1'
 
+sensor:
+  # Uptime sensor.
+  - platform: uptime
+    name: ${upper_devicename} Uptime Internal
+    id: 'upptime'
+    internal: True
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(upptime).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              return (
+                (days ? String(days) + "d " : "") +
+                (hours ? String(hours) + "h " : "") +
+                (minutes ? String(minutes) + "m " : "") +
+                (String(seconds) + "s")
+              ).c_str();
+  # WiFi Signal sensor.
+  - platform: wifi_signal
+    name: ${upper_devicename} WiFi Signal
+    update_interval: 120s
+
 switch:
   - platform: template
     name: ${upper_devicename} Setup Switch # Switch to enter Setup Mode
@@ -176,16 +229,17 @@ switch:
         - globals.set:
             id: settingmode
             value:  '0'
+
+button:
   - platform: template
-    name: ${upper_devicename} Setup Button # Switch to replicate the Physical Button
+    name: ${upper_devicename} Setup Button # Software Button to replicate the Physical Button
     id: hasetup
-    turn_on_action:
+    on_press:
       - if: # If settings variable is on
           condition:
             - lambda: 'return id(settingmode) != 0;'
           then: # Enter Setting Mode
             - script.execute: setupbutton
-            - switch.turn_off: hasetup
 
 cover:
   - platform: template
@@ -194,6 +248,9 @@ cover:
     open_action:
       then:
         - logger.log: "Opening"
+        - logger.log:
+            format: "Endstop is: %d"
+            args: [ 'id(endstop)' ]
         - stepper.set_target: # Send stepper to endstop
             id: $mystepper
             target: !lambda return id(endstop);
@@ -211,6 +268,10 @@ cover:
                         current_operation: OPENING
                     - delay: 1000 ms
             else:
+              - cover.template.publish:
+                  id: blinded
+                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
+                  current_operation: OPENING
               - wait_until: # Wait until endstop reached
                   lambda: 'return (id($mystepper).current_position == id(endstop));'
         - globals.set: # Set global to current position
@@ -243,6 +304,10 @@ cover:
                         current_operation: CLOSING
                     - delay: 1000 ms
             else:
+              - cover.template.publish:
+                  id: blinded
+                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(endstop))));' 
+                  current_operation: CLOSING
               - wait_until: # Wait until endstop reached
                   lambda: 'return id($mystepper).current_position == 0;'
         - globals.set: # Set global to current position
@@ -305,6 +370,10 @@ script:
             - lambda: 'return (id(settingmode) == 3);'
           then:
             - logger.log: "Pressed Setup Button: Mode 3"
+            - logger.log: "Blind is now set up"
+            - logger.log:
+                format: "Endstop is: %d"
+                args: [ 'id(endstop)' ]
             - stepper.set_target: # Set Stepper position
                 id: $mystepper
                 target: !lambda return id($mystepper).current_position;
@@ -330,6 +399,7 @@ script:
             - lambda: 'return (id(settingmode) == 2);'
           then:
             - logger.log: "Pressed Setup Button: Mode 2"
+            - logger.log: "Blind is Opening, Press button when fully open"
             - stepper.report_position: # Reset Stepper position to 0
                 id: $mystepper
                 position: '0'
@@ -339,7 +409,7 @@ script:
             - globals.set: # Move stepper to 0 (doesn't move it's already there!)
                 id: ${mystepper}_global
                 value: '0'
-            - stepper.set_target: # Reset Stepper position to 72000
+            - stepper.set_target: # Reset Stepper position to 140000
                 id: $mystepper
                 target: '140000'
             - globals.set: # Advance setup to next mode
@@ -350,9 +420,10 @@ script:
             - lambda: 'return (id(settingmode) == 1);'
           then:
             - logger.log: "Pressed Setup Button: Mode 1"
-            - stepper.report_position: # Set Stepper position to 72000, makes it move to 0 (Closed)
+            - logger.log: "Blind is Closing, Press button when fully closed"
+            - stepper.report_position: # Set Stepper position to 140000, makes it move to 0 (Closed)
                 id: $mystepper
-                position: '72000'
+                position: '140000'
             - globals.set: # Advance setup to next mode
                 id: settingmode
                 value:  '2'
