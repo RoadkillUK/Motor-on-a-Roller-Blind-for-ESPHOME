@@ -19,11 +19,27 @@
 
 # Button is also used to open/close the blind (must be fully open/closed first)
 
-# Copy these files to the config/esphome/ directory
-# Don't compile this sketch, edit testblind.yaml (if required) and compile that sketch
-# You won't be able to see this sketch in HA (because of the . at the front of the filename)
+# Copy the file to the config/esphome/ directory
 
-esphome:
+substitutions:
+  devicename: roller_blind
+  upper_devicename: Roller Blind
+  mystepper: my_stepper # Name of the stepper motor (leave as is)
+  speed: 600 steps/s # Set the speed of the motor
+  reportin: "0" # Set if you want the blind to report position while moving (causes delay)
+
+  pina: D1 # Swap these \_ coil a
+  pinb: D3 # Swap these /
+  pinc: D2 # Swap these \_ coil b
+  pind: D4 # Swap these /
+
+# NOTE:  If you find that your shades are going the wrong way, you can change the pin
+#        settings or reverse the + and – wires for each of the A and B motor
+#        pairs on your driver and the motor will spin in the opposite direction.
+
+# These pinouts are for the original 'Motor on a Roller Blind'esphome:
+
+
   name: $devicename
   platform: ESP8266
   board: d1_mini
@@ -76,7 +92,8 @@ web_server:
 logger:
 
 api:
-  password: !secret api_password
+  encryption:
+    key: !secret encryption_key
 
 ota:
   password: !secret ota_password
