@@ -39,11 +39,11 @@ substitutions:
 
 # These pinouts are for the original 'Motor on a Roller Blind'esphome:
 
-
-  name: $devicename
-  platform: ESP8266
+esp8266:
   board: d1_mini
-  esp8266_restore_from_flash: True
+  restore_from_flash: True
+esphome:
+  name: $devicename
   on_boot:
     - priority: -200.0
       then:
@@ -93,7 +93,7 @@ logger:
 
 api:
   encryption:
-    key: !secret encryption_key
+    key: !secret enc_key
 
 ota:
   password: !secret ota_password
