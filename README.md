@@ -31,6 +31,8 @@ To upload via WIFI, go to https://steve.fi/hardware/ota-upload/ and follow the i
 
 You should only have to set up the blind once, it stores the open/closed status and position even if you flash the device, it will report open/closed so HA will know where your blind is, even after restarting HA.
 
+I've not mentioned before, but I run my blinds using a 9v input on the VIN pin, been running great for over 3 years.
+
 ## How do I set up the blind?
 
  This sketch will add 2 switches named <upper_devicename> Setup Switch and Setup Button
