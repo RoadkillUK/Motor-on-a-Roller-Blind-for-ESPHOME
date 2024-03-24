@@ -1,0 +1,33 @@
+###########################################################################################
+# Required variables                                                                      #
+#                                                                                         #
+#  ____________________________________________________________________________________   #
+# | Variable name    | Description                                                     |  #
+# |==================|=================================================================|  #
+# | upper_devicename | Friendly name of device to show on frontend (Homeassistant,...) |  #
+# |____________________________________________________________________________________|  #
+###########################################################################################
+
+text_sensor:
+  - platform: version
+    name: ${upper_devicename} ESPHome Version
+    hide_timestamp: true
+  - platform: wifi_info
+    ip_address:
+      name: ${upper_devicename} IP
+      icon: mdi:ip-network
+    ssid:
+      name: ${upper_devicename} SSID
+      icon: mdi:wifi
+    mac_address:
+      name: '${upper_devicename} MAC'
+      icon: mdi:identifier
+  - platform: template
+    name: ${upper_devicename} Friendly Name
+    icon: 'mdi:information-outline'
+    lambda: |-
+      return {"$upper_devicename"};
+  - platform: template
+    name: ${upper_devicename} Uptime
+    id: uptime_human
+    icon: mdi:clock-start
