@@ -1,0 +1,363 @@
+#############################################################################
+# Required variables                                                        #
+#                                                                           #
+#  ______________________________________________________________________   #
+# | Variable name | Description                                          |  #
+# |===============|======================================================|  #
+# | mystepper     | Id of the stepper motor                              |  #
+# |---------------|------------------------------------------------------|  #
+# | name          | Friendly name (used for logging and frontend strings)|  #
+# |---------------|------------------------------------------------------|  #
+# | buttonpin     | Pin of the physical button                           |  #
+# |---------------|------------------------------------------------------|  #
+# | speed         | Max speed of the stepper motor in steps/s            |  #
+# |---------------|------------------------------------------------------|  #
+# | pina          | First pin of the stepper motor                       |  #
+# |---------------|------------------------------------------------------|  #
+# | pinb          | Second pin of the stepper motor                      |  #
+# |---------------|------------------------------------------------------|  #
+# | pinc          | Third pin of the stepper motor                       |  #
+# |---------------|------------------------------------------------------|  #
+# | pind          | Fourth pin of the stepper motor                      |  #
+# |---------------|------------------------------------------------------|  #
+# | reportin      | Report blind position while moving ('0'/'1')         |  #
+# |______________________________________________________________________|  #
+#############################################################################
+
+esphome:
+  on_boot:
+    - priority: -200.0
+      then:
+      - stepper.report_position: # Set stepper to global variable
+          id: $mystepper
+          position: !lambda return id(${mystepper}_global);
+      - stepper.set_target: # Set stepper to global variable
+          id: $mystepper
+          target: !lambda return id(${mystepper}_global);
+      - if: # If blind is Closed
+          condition:
+            - lambda: 'return id(${mystepper}_global) == 0;'
+          then: # Publish state etc.
+            - cover.template.publish:
+                id: ${mystepper}_blinded
+                state: CLOSED
+                current_operation: IDLE
+      - if: # If blind is Open
+          condition:
+            - lambda: 'return id(${mystepper}_global) == id(${mystepper}_endstop);'
+          then: # Publish state etc.
+            - cover.template.publish:
+                id: ${mystepper}_blinded
+                state: OPEN
+                current_operation: IDLE
+      - if: # If blind is Neither
+          condition:
+            - lambda: 'return (id(${mystepper}_global) != 0) && (id(${mystepper}_global) != id(${mystepper}_endstop));'
+          then: #  # Publish state etc.
+            - cover.template.publish:
+                id: ${mystepper}_blinded
+                position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                current_operation: IDLE
+
+stepper:
+  - platform: uln2003
+    id: $mystepper
+    pin_a: $pina
+    pin_b: $pinb
+    pin_c: $pinc
+    pin_d: $pind
+    max_speed: ${speed} # Speed of the motor
+    sleep_when_done: True
+    acceleration: inf
+    deceleration: inf
+
+globals:
+  - id: ${mystepper}_global # Integer for storing the stepper position in case of reboot
+    type: int
+    restore_value: True
+    initial_value: '0'
+
+  - id: ${mystepper}_openclosed # Boolean to store OPEN/CLOSED state
+    type: bool
+    restore_value: True
+    initial_value: '0'
+
+  - id: ${mystepper}_endstop # Variable for storing ENDSTOP (how far to move stepper)
+    type: int
+    restore_value: True
+    initial_value: '1000'
+
+  - id: ${mystepper}_settingmode # Integer for Setup Mode
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  - id: ${mystepper}_reportin # Boolean for reporting the position of blind when moving (See testblind.yaml)
+    type: bool
+    restore_value: no
+    initial_value: '${reportin}'
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: $buttonpin # Connect Button to pin specified in buttonpin and GND
+      mode: INPUT_PULLUP
+      inverted: True
+    name: Button
+    internal: True
+    on_click:
+    - min_length: 50ms
+      max_length: 500ms
+      then: # Short press to OPEN/CLOSE blinds and also for setting up
+        - if: # If settings variable is on
+            condition:
+              - lambda: 'return id(${mystepper}_settingmode) != 0;'
+            then: # Enter Setting Mode
+              - script.execute: ${mystepper}_setupbutton
+            else:
+              - if: # If blind is closed
+                  condition:
+                    - lambda: 'return id(${mystepper}_openclosed) == 0;'
+                  then: # Open blind
+                    - cover.open: ${mystepper}_blinded
+                  else: # Close blind
+                    - cover.close: ${mystepper}_blinded
+    - min_length: 1000ms
+      max_length: 3000ms
+      then: # Long press to Enter Setting Mode
+        - logger.log: "${name} Entered Settings Mode"
+        - globals.set:
+            id: ${mystepper}_settingmode
+            value:  '1'
+
+switch:
+  - platform: template
+    name: ${name} Setup Switch # Switch to enter Setup Mode
+    id: ${mystepper}_setupswitch
+    lambda: |-
+      if (id(${mystepper}_settingmode) != 0) {
+        return true;
+      } else {
+        return false;
+      }
+    turn_on_action:
+      then:
+        - logger.log: "${name} Entered Settings Mode"
+        - globals.set:
+            id: ${mystepper}_settingmode
+            value:  '1'
+    turn_off_action:
+      then:
+        - logger.log: "${name} Exiting Settings Mode"
+        - globals.set:
+            id: ${mystepper}_settingmode
+            value:  '0'
+
+button:
+  - platform: template
+    name: ${name} Setup Button # Software Button to replicate the Physical Button
+    id: ${mystepper}_hasetup
+    on_press:
+      - if: # If settings variable is on
+          condition:
+            - lambda: 'return id(${mystepper}_settingmode) != 0;'
+          then: # Enter Setting Mode
+            - script.execute: ${mystepper}_setupbutton
+
+cover:
+  - platform: template
+    name: $name
+    id: ${mystepper}_blinded
+    open_action:
+      then:
+        - logger.log: "Opening"
+        - logger.log:
+            format: "Endstop is: %d"
+            args: [ 'id(${mystepper}_endstop)' ]
+        - stepper.set_target: # Send stepper to endstop
+            id: $mystepper
+            target: !lambda return id(${mystepper}_endstop);
+        - if:
+            condition: 
+              lambda: 'return id(${mystepper}_reportin) == 1;' # If Reporting is Selected
+            then:
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != id(${mystepper}_endstop);'
+                  then:
+                    - cover.template.publish:
+                        id: ${mystepper}_blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                        current_operation: OPENING
+                    - delay: 1000 ms
+            else:
+              - cover.template.publish:
+                  id: ${mystepper}_blinded
+                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                  current_operation: OPENING
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return (id($mystepper).current_position == id(${mystepper}_endstop));'
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position; 
+        - globals.set: # Set toggle to OPEN (No need for 'optimistic mode')
+            id: ${mystepper}_openclosed
+            value: '1'
+        - cover.template.publish:
+            id: ${mystepper}_blinded
+            state: OPEN 
+            current_operation: IDLE
+    close_action:
+      then:
+        - logger.log: "Closing"
+        - stepper.set_target: # Send stepper to 0
+            id: $mystepper
+            target: '0'
+        - if:
+            condition: 
+              lambda: 'return id(${mystepper}_reportin) == 1;'
+            then:
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != 0;'
+                  then:
+                    - cover.template.publish:
+                        id: ${mystepper}_blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                        current_operation: CLOSING
+                    - delay: 1000 ms
+            else:
+              - cover.template.publish:
+                  id: ${mystepper}_blinded
+                  position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                  current_operation: CLOSING
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return id($mystepper).current_position == 0;'
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position; 
+        - globals.set: # Set toggle to CLOSED (No need for 'optimistic mode')
+            id: ${mystepper}_openclosed
+            value: '0'
+        - cover.template.publish:
+            id: ${mystepper}_blinded
+            state: CLOSED
+            current_operation: IDLE
+    position_action:
+      then:
+        - stepper.set_target:
+            id: $mystepper
+            target: !lambda return int(id(${mystepper}_endstop) * pos);
+        - if:
+            condition: 
+              lambda: 'return id(${mystepper}_reportin) == 1;'
+            then:
+              - logger.log: 
+                  format: "Endstop s position %.1f a current position %.1f"
+                  args: ['float(id(${mystepper}_endstop) * pos)', 'float(id($mystepper).current_position)']
+              - cover.template.publish:
+                  id: ${mystepper}_blinded
+                  current_operation: !lambda |- 
+                    if (float(id(${mystepper}_endstop) * pos) > float(id($mystepper).current_position)) {
+                      return COVER_OPERATION_OPENING;
+                    } else {
+                      return COVER_OPERATION_CLOSING;
+                    }
+              - while:
+                  condition:
+                    lambda: 'return id($mystepper).current_position != int(id(${mystepper}_endstop) * pos);'
+                  then:
+                    - cover.template.publish:
+                        id: ${mystepper}_blinded
+                        position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+                    - delay: 1000 ms
+            else:
+              - wait_until: # Wait until endstop reached
+                  lambda: 'return id($mystepper).current_position == (int(id(${mystepper}_endstop) * pos));'
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position; 
+        - cover.template.publish:
+            id: ${mystepper}_blinded
+            position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+            current_operation: IDLE
+    stop_action:
+      then:
+        - stepper.set_target:
+            id: $mystepper
+            target: !lambda return id($mystepper).current_position;
+        - globals.set: # Set global to current position
+            id: ${mystepper}_global
+            value: !lambda return id($mystepper).current_position;
+        - cover.template.publish:
+            id: ${mystepper}_blinded
+            position: !lambda 'return (float(float(id($mystepper).current_position) / float(id(${mystepper}_endstop))));' 
+            current_operation: IDLE
+    has_position: true
+    device_class: blind
+
+script:
+  - id: ${mystepper}_setupbutton
+    then:
+      - if:
+          condition:
+            - lambda: 'return (id(${mystepper}_settingmode) == 3);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 3"
+            - logger.log: "Blind is now set up"
+            - logger.log:
+                format: "Endstop is: %d"
+                args: [ 'id(${mystepper}_endstop)' ]
+            - stepper.set_target: # Set Stepper position
+                id: $mystepper
+                target: !lambda return id($mystepper).current_position;
+            - globals.set: # Set Endstop Variable
+                id: ${mystepper}_endstop
+                value: !lambda return id($mystepper).current_position;
+            - globals.set: # Set Global stepper position
+                id: ${mystepper}_global
+                value: !lambda return id($mystepper).current_position;
+            - globals.set: # Reset Setting Mode
+                id: ${mystepper}_settingmode
+                value:  '0'
+            - globals.set: # Set toggle to Open
+                id: ${mystepper}_openclosed
+                value: '1'
+            - cover.template.publish:
+                id: ${mystepper}_blinded
+                state: OPEN 
+                current_operation: IDLE
+            - logger.log: "Exiting Setting Mode"
+      - if:
+          condition:
+            - lambda: 'return (id(${mystepper}_settingmode) == 2);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 2"
+            - logger.log: "Blind is Opening, Press button when fully open"
+            - stepper.report_position: # Reset Stepper position to 0
+                id: $mystepper
+                position: '0'
+            - stepper.set_target: # Reset Stepper position to 0
+                id: $mystepper
+                target: '0'
+            - globals.set: # Move stepper to 0 (doesn't move it's already there!)
+                id: ${mystepper}_global
+                value: '0'
+            - stepper.set_target: # Reset Stepper position to 140000
+                id: $mystepper
+                target: '140000'
+            - globals.set: # Advance setup to next mode
+                id: ${mystepper}_settingmode
+                value:  '3'
+      - if:
+          condition:
+            - lambda: 'return (id(${mystepper}_settingmode) == 1);'
+          then:
+            - logger.log: "Pressed Setup Button: Mode 1"
+            - logger.log: "Blind is Closing, Press button when fully closed"
+            - stepper.report_position: # Set Stepper position to 140000, makes it move to 0 (Closed)
+                id: $mystepper
+                position: '140000'
+            - globals.set: # Advance setup to next mode
+                id: ${mystepper}_settingmode
+                value:  '2'
