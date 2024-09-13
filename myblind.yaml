@@ -115,7 +115,7 @@ stepper:
 
 globals:
   - id: ${mystepper}_global # Integer for storing the stepper position in case of reboot
-    type: int
+    type: unsigned long
     restore_value: True
     initial_value: '0'
 
@@ -125,7 +125,7 @@ globals:
     initial_value: '0'
 
   - id: endstop # Variable for storing ENDSTOP (how far to move stepper)
-    type: int
+    type: unsigned long
     restore_value: True
     initial_value: '1000'
 
@@ -427,9 +427,9 @@ script:
             - globals.set: # Move stepper to 0 (doesn't move it's already there!)
                 id: ${mystepper}_global
                 value: '0'
-            - stepper.set_target: # Reset Stepper position to 140000
+            - stepper.set_target: # Reset Stepper position to 500000
                 id: $mystepper
-                target: '140000'
+                target: '500000'
             - globals.set: # Advance setup to next mode
                 id: settingmode
                 value:  '3'
@@ -439,9 +439,9 @@ script:
           then:
             - logger.log: "Pressed Setup Button: Mode 1"
             - logger.log: "Blind is Closing, Press button when fully closed"
-            - stepper.report_position: # Set Stepper position to 140000, makes it move to 0 (Closed)
+            - stepper.report_position: # Set Stepper position to 500000, makes it move to 0 (Closed)
                 id: $mystepper
-                position: '140000'
+                position: '500000'
             - globals.set: # Advance setup to next mode
                 id: settingmode
                 value:  '2'
