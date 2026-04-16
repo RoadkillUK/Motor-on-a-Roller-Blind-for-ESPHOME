@@ -22,7 +22,7 @@
 # Copy the file to the config/esphome/ directory
 
 substitutions:
-  devicename: roller_blind
+  devicename: roller-blind
   upper_devicename: Roller Blind
   mystepper: my_stepper # Name of the stepper motor (leave as is)
   speed: 600 steps/s # Set the speed of the motor
@@ -85,7 +85,8 @@ wifi:
   ap:
     ssid: $upper_devicename
     password: !secret wifi_password
-
+  min_auth_mode: WPA2  # Or WPA3 for ESP32 if all your networks support it
+    
 web_server:
   port: 80
 
@@ -207,7 +208,7 @@ sensor:
         - text_sensor.template.publish:
             id: uptime_human
             state: !lambda |-
-              int seconds = round(id(upptime).raw_state);
+              int seconds = round(id(upptime).get_raw_state());
               int days = seconds / (24 * 3600);
               seconds = seconds % (24 * 3600);
               int hours = seconds / 3600;
